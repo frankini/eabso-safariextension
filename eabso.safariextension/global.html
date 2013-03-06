@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script type="text/javascript" src="jquery-1.6.min.js"></script>
+<script type="text/javascript">
+
+/* Global Variables */
+var username = safari.extension.settings.username
+var reminderPopover;
+
+/* Initialize */
+
+safari.application.addEventListener("command", performCommand, false);
+safari.application.addEventListener("validate", validateCommand, false);
+safari.extension.settings.addEventListener("change", settingsChanged, false);
+
+
+function performCommand(event) {
+
+	var url = safari.application.activeBrowserWindow.activeTab.url;
+	console.log(url, (new Date()).toLocaleString());
+	console.log(username);
+
+	showReminderPopover(event.target, url, 'shortlink');
+    $.post('http://eab.so/', { "uri": url, "user": username});
+}
+
+function validateCommand(event) {
+
+}
+
+function settingsChanged(event) {
+	if (event.key === "username") {
+		username = event.newValue;
+    }
+}
+
+function findActiveWindowToolbarItem()
+{
+    // Find the toolbar item for the window that is currently being shown to the user.
+    var toolbarItemCurrentlyShowing;
+    var toolbarItems = safari.extension.toolbarItems;
+    for (var i = 0; i < toolbarItems.length; ++i) {
+        if (toolbarItems[i].browserWindow === safari.application.activeBrowserWindow)
+            return toolbarItems[i];
+    }
+    return null;
+}
+
+function createReminderPopoverIfNecessary()
+{
+    if (!reminderPopover)
+        reminderPopover = safari.extension.createPopover("reminderPopover", safari.extension.baseURI + "popover.html", 250, 150);
+    return reminderPopover;
+}
+
+function showReminderPopover(toolbarItem, message, type)
+{
+	var popover;
+
+    if (!toolbarItem)
+        return;
+    // Associate the popover with the toolbar item.
+    toolbarItem.popover = createReminderPopoverIfNecessary();
+    // Tell the toolbar item to show the popover.
+    for (var i in safari.extension.popovers) {
+      if (safari.extension.popovers[i].identifier === "reminderPopover") {
+        popover = safari.extension.popovers[i];
+      }
+    }
+    popover.contentWindow.displayMessage(message, type);
+    toolbarItem.showPopover();
+}
+
+</script>
+</head>
+
+<body>
+</body>
+</html>
